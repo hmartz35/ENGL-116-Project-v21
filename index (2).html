@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sixty Steps · A Digital Folio on the Craft of Fine Bookbinding</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=IM+Fell+English+SC&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2a1d12;--ink-soft:#4a382a;--paper:#f3e9d2;--paper-deep:#e8d9b6;
+  --leather:#5a2418;--leather-deep:#3a1408;--gilt:#c9a24a;--gilt-bright:#e8c668;
+  --rule:#8a6a3a;--gloss-bg:#ebdcb7;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'EB Garamond',Georgia,serif;background:radial-gradient(ellipse at 50% 0%,#2a1810 0%,#14080a 60%,#0a0405 100%);color:var(--ink);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:30px 16px 60px;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background-image:radial-gradient(circle at 20% 30%,rgba(255,220,160,.04) 0%,transparent 40%),radial-gradient(circle at 80% 70%,rgba(255,200,120,.03) 0%,transparent 40%);z-index:0}
+
+/* ── Intro ── */
+.intro-overlay{position:fixed;inset:0;background:rgba(10,4,5,.88);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:999;padding:24px}
+.intro-overlay.hidden{display:none}
+.intro-card{max-width:520px;background:var(--paper);color:var(--ink);padding:36px 40px;border:2px double var(--gilt);box-shadow:0 30px 80px rgba(0,0,0,.7);text-align:center;position:relative}
+.intro-card::before{content:"";position:absolute;inset:12px;border:1px solid rgba(138,106,58,.55);pointer-events:none}
+.intro-card h1{font-family:'IM Fell English SC',serif;letter-spacing:.08em;font-size:1.75rem;margin-bottom:.5em}
+.intro-card p{font-family:'EB Garamond',serif;font-size:1rem;line-height:1.55;margin-bottom:.8em;color:var(--ink-soft)}
+.intro-orn{color:var(--gilt);font-size:1.8rem;margin-bottom:.4em}
+.intro-card button{margin-top:.8em;font-family:'IM Fell English SC',serif;letter-spacing:.14em;background:var(--leather);color:var(--gilt-bright);border:1px solid var(--gilt);padding:.65em 1.6em;cursor:pointer;font-size:.9rem}
+.intro-card button:hover{background:var(--leather-deep)}
+
+/* ── Header ── */
+header.title-bar{color:var(--gilt);font-family:'IM Fell English SC',serif;letter-spacing:.18em;font-size:.85rem;margin-bottom:18px;text-align:center;z-index:2;position:relative}
+header.title-bar .ornament{color:var(--gilt-bright);margin:0 .5em}
+
+/* ── Book stage ── */
+.book-stage{perspective:2400px;width:min(1100px,100%);aspect-ratio:11/7;position:relative;z-index:2}
+.book{position:relative;width:100%;height:100%;transform-style:preserve-3d;box-shadow:0 30px 60px rgba(0,0,0,.6),0 60px 120px rgba(0,0,0,.4)}
+.book::before{content:"";position:absolute;top:0;bottom:0;left:50%;width:3px;background:linear-gradient(to bottom,transparent 0%,rgba(0,0,0,.5) 8%,rgba(0,0,0,.7) 50%,rgba(0,0,0,.5) 92%,transparent 100%);transform:translateX(-50%);z-index:50;pointer-events:none}
+
+/* ── Pages: RIGHT half, flip toward LEFT (standard Western book) ── */
+.page{position:absolute;top:0;left:50%;width:50%;height:100%;transform-origin:left center;transform-style:preserve-3d;transition:transform .9s cubic-bezier(.45,.05,.25,1);cursor:pointer}
+.page.flipped{transform:rotateY(180deg)}
+.face{position:absolute;top:0;left:0;width:100%;height:100%;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--paper);background-image:radial-gradient(ellipse at 50% 50%,transparent 60%,rgba(120,90,40,.08) 100%),url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .55 0 0 0 0 .42 0 0 0 0 .25 0 0 0 .08 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");padding:40px 44px 36px;overflow:hidden;color:var(--ink)}
+/* front face: on RIGHT, spine-shadow on left edge */
+.face.front{box-shadow:inset 6px 0 14px -6px rgba(0,0,0,.35)}
+/* back face: flipped to LEFT, spine-shadow on right edge */
+.face.back{transform:rotateY(-180deg);box-shadow:inset -6px 0 14px -6px rgba(0,0,0,.35)}
+
+.static-left,.static-right{position:absolute;top:0;width:50%;height:100%;z-index:0}
+.static-left{left:0}.static-right{right:0}
+
+/* ── Cover ── */
+.cover-front{background:radial-gradient(ellipse at 30% 30%,#6e2e1f 0%,var(--leather) 35%,var(--leather-deep) 100%) !important;background-image:radial-gradient(ellipse at 30% 30%,#6e2e1f 0%,#5a2418 40%,#3a1408 100%),url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.7' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .15 0 0 0 0 .05 0 0 0 0 .02 0 0 0 .35 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");background-blend-mode:multiply;color:var(--gilt);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:50px 60px}
+.cover-front::before{content:"";position:absolute;inset:24px;border:2px double var(--gilt);pointer-events:none;box-shadow:inset 0 0 30px rgba(0,0,0,.4)}
+.cover-front::after{content:"";position:absolute;inset:36px;border:1px solid var(--gilt);opacity:.6;pointer-events:none}
+.cover-front h1{font-family:'IM Fell English SC',serif;font-size:clamp(2rem,4.5vw,3.4rem);letter-spacing:.08em;line-height:1.1;margin-bottom:.4em;text-shadow:0 1px 0 rgba(0,0,0,.5);color:var(--gilt-bright)}
+.cover-front .sub{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.1rem;color:var(--gilt);margin-top:.5em;letter-spacing:.04em}
+.cover-front .ornament{font-size:2rem;margin:1.4em 0 1em;color:var(--gilt-bright)}
+.cover-front .author{font-family:'IM Fell English SC',serif;font-size:.85rem;letter-spacing:.2em;margin-top:1em;opacity:.85}
+
+/* ── Typography ── */
+.face h2{font-family:'IM Fell English SC',serif;font-size:1.4rem;letter-spacing:.06em;color:var(--ink);margin-bottom:.5em;text-align:center}
+.face p{font-size:1rem;line-height:1.55;color:var(--ink);margin-bottom:.7em;text-align:justify;hyphens:auto}
+.face p.lead::first-letter{font-family:'IM Fell English SC',serif;float:left;font-size:3.4rem;line-height:.85;padding:.05em .12em 0 0;color:var(--leather)}
+.face blockquote{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.02rem;line-height:1.45;color:var(--ink-soft);border-left:2px solid var(--gilt);padding:.4em 0 .4em 1em;margin:.6em 0 .8em}
+.face blockquote .attr{display:block;font-style:normal;font-family:'IM Fell English SC',serif;font-size:.7rem;letter-spacing:.12em;color:var(--ink-soft);margin-top:.3em;opacity:.8}
+.gloss{margin-top:.8em;padding:.55em .8em;background:var(--gloss-bg);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);font-size:.83rem;line-height:1.4;color:var(--ink-soft);font-style:italic;position:relative}
+.gloss::before{content:"❦";position:absolute;top:-.7em;left:.6em;background:var(--gloss-bg);color:var(--gilt);padding:0 .3em;font-style:normal;font-size:.9rem}
+.gloss .cite{font-family:'IM Fell English SC',serif;font-style:normal;font-size:.7rem;letter-spacing:.1em;color:var(--leather);white-space:nowrap}
+.rule{text-align:center;color:var(--rule);font-size:1.1rem;margin:.5em 0 .7em;letter-spacing:.4em;opacity:.7}
+.pg-num{position:absolute;bottom:18px;font-family:'IM Fell English SC',serif;font-size:.7rem;letter-spacing:.2em;color:var(--ink-soft);opacity:.65}
+.pg-num.left{left:44px}.pg-num.right{right:44px}
+.step-tag{display:inline-block;font-family:'IM Fell English SC',serif;font-size:.7rem;letter-spacing:.18em;color:var(--leather);border-bottom:1px solid var(--rule);padding-bottom:.2em;margin-bottom:.7em}
+
+/* ── Layouts ── */
+.titlepage{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:60px 50px}
+.titlepage h1{font-family:'IM Fell English SC',serif;font-size:2.2rem;letter-spacing:.08em;line-height:1.1;color:var(--ink);margin-bottom:.3em}
+.titlepage .lede{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.15rem;color:var(--ink-soft);margin-bottom:1.5em;max-width:80%;text-align:center}
+.titlepage .rule-fancy{width:60%;height:14px;background-image:linear-gradient(to right,transparent 0,var(--rule) 30%,var(--rule) 70%,transparent 100%);background-size:100% 1px;background-position:0 50%;background-repeat:no-repeat;margin:1em 0;position:relative}
+.titlepage .rule-fancy::after{content:"❦";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--paper);color:var(--gilt);padding:0 .5em}
+.titlepage .by{font-style:italic;color:var(--ink-soft);margin-top:1em}
+.titlepage .author{font-family:'IM Fell English SC',serif;letter-spacing:.18em;font-size:.95rem;color:var(--ink);margin-top:.4em}
+.titlepage .imprint{margin-top:auto;padding-top:2em;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.85rem;color:var(--ink-soft);text-align:center}
+.frontispiece{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:36px 44px}
+.frontispiece h2{font-family:'IM Fell English SC',serif;font-size:1.5rem;letter-spacing:.1em;margin-bottom:.3em}
+.frontispiece .latin{font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--ink-soft);font-size:.95rem}
+
+/* ── Image plates: <img> with object-fit:contain so full image always shows ── */
+.plate-wrap{overflow:hidden;border:1px solid var(--rule);box-shadow:0 4px 14px rgba(60,30,10,.25);margin-bottom:.75em;background:var(--paper-deep)}
+.plate-wrap.short{height:40%}
+.plate-wrap.tall{height:72%}
+.plate-wrap.full{height:84%}
+.plate-wrap.frontis{width:82%;height:62%;margin:0 auto .8em}
+.plate-img{width:100%;height:100%;object-fit:contain;display:block;filter:sepia(.12) saturate(.92)}
+.plate-caption{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.82rem;text-align:center;color:var(--ink-soft);line-height:1.3}
+.plate-caption .roman{font-family:'IM Fell English SC',serif;font-style:normal;letter-spacing:.12em;margin-right:.4em}
+
+/* ── Archive gallery: single column, images breathe ── */
+.arch-col{display:flex;flex-direction:column;gap:10px;margin:.5em 0}
+.arch-col figure{margin:0}
+.arch-img{width:100%;object-fit:contain;display:block;border:1px solid var(--rule);box-shadow:0 3px 10px rgba(60,30,10,.22);filter:sepia(.12) saturate(.9);background:var(--paper-deep)}
+.arch-img.lg{height:210px}
+.arch-img.md{height:140px}
+.arch-col figcaption{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.74rem;line-height:1.25;text-align:center;color:var(--ink-soft);margin-top:.3em}
+
+/* ── Argument / conclusion ── */
+.argument-page{background:radial-gradient(ellipse at 50% 50%,var(--paper) 0%,var(--paper-deep) 100%)}
+.conclusion-orn{text-align:center;color:var(--gilt);font-size:1.6rem;margin:1em 0}
+
+/* ── Works cited ── */
+.works-cited p{font-size:.88rem;text-indent:-22px;padding-left:22px;margin-bottom:.75em;text-align:left;line-height:1.35}
+
+/* ── Controls ── */
+.controls{display:flex;align-items:center;gap:18px;margin-top:30px;z-index:2;position:relative}
+.controls button{font-family:'IM Fell English SC',serif;letter-spacing:.15em;background:transparent;border:1px solid var(--gilt);color:var(--gilt);padding:.6em 1.4em;cursor:pointer;font-size:.85rem;transition:all .2s}
+.controls button:hover:not(:disabled){background:var(--gilt);color:var(--leather-deep)}
+.controls button:disabled{opacity:.3;cursor:not-allowed}
+.controls .progress{color:var(--gilt);font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.95rem;min-width:130px;text-align:center}
+.footer-note{margin-top:24px;color:#8a7a5a;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.85rem;text-align:center;z-index:2;position:relative;opacity:.7}
+
+@media(max-width:760px){
+  .book-stage{aspect-ratio:9/14}
+  .face{padding:22px 20px 26px}
+  .face h2{font-size:1.1rem}.face p{font-size:.88rem}
+  .pg-num.left{left:20px}.pg-num.right{right:20px}
+  .cover-front,.titlepage,.frontispiece{padding:28px 22px}
+  .plate-wrap.short{height:34%}.plate-wrap.tall{height:55%}
+}
+</style>
+</head>
+<body>
+
+<!-- Intro splash -->
+<div class="intro-overlay" id="intro">
+  <div class="intro-card">
+    <div class="intro-orn">❦</div>
+    <h1>Sixty Steps</h1>
+    <p>A digital folio on the craft of traditional hand bookbinding — assembled from a workshop with a master binder, process photographs, and historical scholarship.</p>
+    <p style="font-size:.9rem;font-style:italic;color:var(--ink-soft)">Click any page or use ← → arrow keys.</p>
+    <button onclick="document.getElementById('intro').classList.add('hidden')">Open the Book</button>
+  </div>
+</div>
+
+<header class="title-bar">
+  Sixty Steps <span class="ornament">❦</span> A Digital Folio
+</header>
+
+<div class="book-stage">
+  <div class="book">
+
+    <!-- Static LEFT endpaper (always visible behind flipped pages) -->
+    <div class="static-left">
+      <div style="width:100%;height:100%;background:radial-gradient(ellipse at 30% 40%,#b88a4a 0%,transparent 50%),radial-gradient(ellipse at 70% 60%,#7a4a28 0%,transparent 55%),linear-gradient(135deg,#a07440 0%,#6e4828 100%)"></div>
+    </div>
+
+    <!-- Static RIGHT back cover (shows when all pages flipped) -->
+    <div class="static-right">
+      <div style="position:relative;width:100%;height:100%;background:radial-gradient(ellipse at 70% 30%,#6e2e1f 0%,#5a2418 35%,#3a1408 100%)">
+        <div style="position:absolute;inset:24px;border:2px double var(--gilt);box-shadow:inset 0 0 30px rgba(0,0,0,.4)"></div>
+        <div style="position:absolute;inset:36px;border:1px solid var(--gilt);opacity:.6"></div>
+        <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:var(--gilt-bright);font-family:'IM Fell English SC',serif;letter-spacing:.2em;text-align:center;line-height:1.6;font-size:.85rem">ECHO ART<br>BINDERY<br><span style="font-size:1.8rem;display:block;margin:.6em 0">❦</span>MMXXVI</div>
+      </div>
+    </div>
+
+    <!--
+      PAGE FLOW (pages start on RIGHT, flip LEFT — standard Western book)
+      Front face = right page (recto) | Back face = left page (verso) after flip
+
+      Spread 0: [endpaper LEFT] [Cover RIGHT]
+      Spread 1: [Title page LEFT] [Frontispiece RIGHT]
+      Spread 2: [Introduction LEFT] [Sewn Block RIGHT]
+      Spread 3: [Glue & Paste LEFT] [Rounding & Backing RIGHT]
+      Spread 4: [Plate IV LEFT] [Boards & Shoulder RIGHT]
+      Spread 5: [Edge Decoration LEFT] [Studio Plate RIGHT]
+      Spread 6: [Invisible Labor LEFT] [Craft vs. Art RIGHT]
+      Spread 7: [Industrialization LEFT] [Argument RIGHT]
+      Spread 8: [Conclusion LEFT] [Process Archive RIGHT]
+      Spread 9: [Gallery pt.2 LEFT] [Works Cited RIGHT]
+      Spread 10: [Colophon LEFT] [Back cover RIGHT]
+    -->
+
+    <!-- ══ Page 0: Cover / Title page ══ -->
+    <div class="page" data-i="0">
+      <div class="face front cover-front">
+        <h1>Sixty<br>Steps</h1>
+        <div class="ornament">❦</div>
+        <div class="sub">A Digital Folio on the Craft<br>of Fine Bookbinding</div>
+        <div class="author" style="margin-top:auto">— A Critical Making Project —</div>
+      </div>
+      <div class="face back titlepage">
+        <h1>Sixty Steps</h1>
+        <p class="lede">Being an account of a virtual workshop in traditional hand bookbinding, conducted with a master binder of the French and German traditions.</p>
+        <div class="rule-fancy"></div>
+        <div class="by">conducted &amp; transcribed by</div>
+        <div class="author">Hayden Martz</div>
+        <div class="imprint">A critical making project for<br>the History of Writing<br>· MMXXVI ·</div>
+        <div class="pg-num left">— ii —</div>
+      </div>
+    </div>
+
+    <!-- ══ Page 1: Frontispiece / Introduction ══ -->
+    <div class="page" data-i="1">
+      <div class="face front frontispiece">
+        <div class="plate-wrap frontis">
+          <img src="images/frontispiece-workshop.jpg" alt="Echo Art Bindery studio" class="plate-img">
+        </div>
+        <h2>Frontispiece</h2>
+        <p class="latin">Echo Art Bindery — the working studio.</p>
+        <div class="pg-num right">— iii —</div>
+      </div>
+      <div class="face back">
+        <span class="step-tag">I. Introduction</span>
+        <h2>The Question</h2>
+        <p class="lead">What does the practice of traditional hand bookbinding reveal about the history of the book — both as a cultural artifact and as a site of skilled, often invisible labor?</p>
+        <p>To approach this question, I conducted a workshop session over FaceTime with my aunt, a working binder trained in the French and German traditions and the proprietor of Echo Art Bindery. What follows is a folio assembled from her instruction, photographs of her studio, and the historical scholarship that frames the craft.</p>
+        <p>Her practice preserves a sequence of nearly sixty distinct operations — a sequence that machine production has, for two centuries, been steadily replacing.</p>
+        <div class="rule">· · ·</div>
+        <div class="pg-num left">— 1 —</div>
+      </div>
+    </div>
+
+    <!-- ══ Page 2: Sewn Block / Glue & Paste ══ -->
+    <div class="page" data-i="2">
+      <div class="face front">
+        <span class="step-tag">II. The Sewn Block</span>
+        <h2>Where the Book Begins</h2>
+        <blockquote>
+          When books were first being made, the sheets were sewn together — the sewing was done by women, and that's all they did was sew up the book box.
+          <span class="attr">— Workshop interview, 2026</span>
+        </blockquote>
+        <p>The first body of the book is the <em>text block</em>: gatherings of folded sheets, called <em>signatures</em>, sewn through the fold onto cords or tapes. In the early trade this was women's work. The sewer handed the block to the <em>forwarder</em>; in the language of a 1904 sociological survey, the book at that point passed "into the hands of men, to be touched no more by women" (MacDonald 5).</p>
+        <div class="gloss">
+          16th-century Cambridge inventories list sewing presses, beating stones, gluing pans, and finishing rolls — a workshop organized around specialized hands in sequence. <span class="cite">— Middleton, pp. 244–47</span>
+        </div>
+        <div class="pg-num right">— 2 —</div>
+      </div>
+      <div class="face back">
+        <span class="step-tag">III. Glue &amp; Paste</span>
+        <h2>Consolidating the Spine</h2>
+        <div class="plate-wrap short">
+          <img src="images/glue-paste.jpg" alt="Wheat starch paste" class="plate-img">
+        </div>
+        <p class="plate-caption"><span class="roman">Fig. I.</span> Wheat starch paste mixed from powder — one of two adhesives used alongside modern PVA at Echo Art Bindery.</p>
+        <blockquote>
+          I have a glue called PVA — when it dries, it turns into a plastic. Once the book is sewn, I apply PVA so there's no spaces between the signatures.
+          <span class="attr">— Workshop interview, 2026</span>
+        </blockquote>
+        <div class="gloss">
+          Flexible glue consciousness only emerged in the late 19th century; Archibald Leighton experimented with treacle-mixed hide glue as early as 1838. Before the 16th century, the spine was not glued at all. <span class="cite">— Middleton, pp. 54–55</span>
+        </div>
+        <div class="pg-num left">— 3 —</div>
+      </div>
+    </div>
+
+    <!-- ══ Page 3: Rounding & Backing / Plate IV ══ -->
+    <div class="page" data-i="3">
+      <div class="face front">
+        <span class="step-tag">IV. Rounding &amp; Backing</span>
+        <h2>Shaping the Spine</h2>
+        <div class="plate-wrap short">
+          <img src="images/archive-sewn-block.jpg" alt="Binder holding sewn block" class="plate-img">
+        </div>
+        <p class="plate-caption"><span class="roman">Fig. II.</span> The binder holds the sewn block, cords still loose before gluing and rounding begin.</p>
+        <blockquote>
+          You round it on a hard surface — like a marble top. You take the book and kind of pull it, and then you hit it with the hammer while the glue is just almost set, but not entirely.
+          <span class="attr">— Workshop interview, 2026</span>
+        </blockquote>
+        <div class="gloss">
+          The third-of-a-circle spine was standard until the late 18th century; briefly made very flat in the 1820s, it was revived by Cobden-Sanderson and Cockerell at the century's end. <span class="cite">— Middleton, pp. 60–61</span>
+        </div>
+        <div class="pg-num right">— 4 —</div>
+      </div>
+      <div class="face back">
+        <div class="plate-wrap tall">
+          <img src="images/sewn-block.jpg" alt="Rounded text block in lying press" class="plate-img">
+        </div>
+        <p class="plate-caption"><span class="roman">Plate IV.</span> A rounded text block in the lying press, cord-ties visible along the spine before lacing into the boards.</p>
+        <div class="pg-num left">— 5 —</div>
+      </div>
+    </div>
+
+    <!-- ══ Page 4: Boards & Shoulder / Edge Decoration ══ -->
+    <div class="page" data-i="4">
+      <div class="face front">
+        <span class="step-tag">V. Boards &amp; the Shoulder</span>
+        <h2>Setting the Hinges</h2>
+        <div class="plate-wrap short">
+          <img src="images/boards-shoulder.jpg" alt="Binder holds sewn block showing cords" class="plate-img">
+        </div>
+        <p class="plate-caption"><span class="roman">Fig. III.</span> The binder demonstrates the cords that will be laced through the boards to seat them at the shoulder.</p>
+        <blockquote>
+          The boards are sitting right in the shoulder. When the board is on, it should match up perfectly level to where the book is.
+          <span class="attr">— Workshop interview, 2026</span>
+        </blockquote>
+        <div class="gloss">
+          In medieval bindings cords were laced through holes drilled diagonally into wooden board edges — as in the smaller volume of the Domesday Book — sometimes pegged, sometimes grooved. <span class="cite">— Middleton, pp. 70–71</span>
+        </div>
+        <div class="pg-num right">— 6 —</div>
+      </div>
+      <div class="face back">
+        <span class="step-tag">VI. Edge Decoration</span>
+        <h2>Gilding &amp; Tooling</h2>
+        <div class="plate-wrap short">
+          <img src="images/edge-decoration.jpg" alt="Miniature tooled binding" class="plate-img">
+        </div>
+        <p class="plate-caption"><span class="roman">Fig. IV.</span> A miniature binding with dot-pattern gold tooling — a student work from Echo Art Bindery.</p>
+        <blockquote>
+          It comes in a little book, it's very thin, and it sticks to everything. If you breathe, it floats away. It takes a huge amount of patience and skill.
+          <span class="attr">— Workshop interview, 2026 (on gold leaf)</span>
+        </blockquote>
+        <div class="gloss">
+          Edge-gilding was performed by hand for three centuries. The first machine process using stamping foil was not patented until 1959, by F. White &amp; Son in collaboration with T. C. Woolnough &amp; Son. <span class="cite">— Middleton, pp. 248–49</span>
+        </div>
+        <div class="pg-num left">— 7 —</div>
+      </div>
+    </div>
+
+    <!-- ══ Page 5: Studio plate / Invisible Labor ══ -->
+    <div class="page" data-i="5">
+      <div class="face front">
+        <div class="plate-wrap tall">
+          <img src="images/touch-precision.jpg" alt="Echo Art Bindery studio overview" class="plate-img">
+        </div>
+        <p class="plate-caption"><span class="roman">Plate V.</span> Echo Art Bindery: the marble-topped bench, lying press, flat files, and accumulated apparatus of a working studio.</p>
+        <div class="pg-num right">— 8 —</div>
+      </div>
+      <div class="face back argument-page">
+        <span class="step-tag">VII. Invisible Labor</span>
+        <h2>Who Made the Book</h2>
+        <p>The trade my aunt practices is the descendant of a workshop economy that ran on hours so long and apprenticeships so unremunerated that the labor itself is barely visible in the historical record. Until 1772, English binders worked from six in the morning to nine at night; after a labor strife in 1786–87, London binders finally finished at seven (Middleton 258).</p>
+        <p>The apprentice who made the work possible was, in Middleton's phrase, <em>"the unpaid but boarded and lodged apprentice"</em> (258) — a labor arrangement that converts a person into infrastructure.</p>
+        <p>By 1913, when Mary Van Kleeck published her Russell Sage study of New York's binderies, the 1900 U.S. Census already counted some fifteen thousand women employed in American bookbinding (Van Kleeck 2). The gendered division of labor had only migrated into the factory.</p>
+        <div class="gloss">
+          Most master binders before the 19th century kept only one or two journeymen and lived above the shop; the ground floor was workshop, the upper floors the home. <span class="cite">— Middleton, p. 258</span>
+        </div>
+        <div class="pg-num left">— 9 —</div>
+      </div>
+    </div>
+
+    <!-- ══ Page 6: Craft vs. Art / Industrialization ══ -->
+    <div class="page" data-i="6">
+      <div class="face front">
+        <span class="step-tag">VIII. Craft, or Art?</span>
+        <h2>The Crossroads</h2>
+        <div class="plate-wrap short">
+          <img src="images/craft-art-binding.jpg" alt="Happy Abstract fine binding by William Blake" class="plate-img">
+        </div>
+        <p class="plate-caption"><span class="roman">Plate VI.</span> <em>Happy Abstract</em> by William Blake — a fine binding by Echo Art Bindery. Navy blocked cloth with leather onlay and gilt lettering.</p>
+        <blockquote>
+          Bookbinders are right at the crossroads of art and craft. Fine binding now is pretty not dissimilar from fine art — because doing art, instead of on a canvas, it's on a book.
+          <span class="attr">— Workshop interview, 2026</span>
+        </blockquote>
+        <div class="pg-num right">— 10 —</div>
+      </div>
+      <div class="face back">
+        <span class="step-tag">IX. Industrialization</span>
+        <h2>The End of a Profession</h2>
+        <blockquote>
+          It's not a practical profession, that's for sure. But it was, back before industrialization put binders out of business.
+          <span class="attr">— Workshop interview, 2026</span>
+        </blockquote>
+        <p>The mechanization of cloth-case binding in the 19th century hollowed out the trade. Of those who enrolled in my aunt's binding program, only a handful completed the full course; she is "the number 11" to finish. The economics no longer support the time the work requires.</p>
+        <div class="gloss">
+          Even within the bindery, a steady mechanization can be traced: machine-engraved brass tools, pneumatic rams swinging from the ceiling to impress oversize tools on vellum, electric sanding drums replacing the file and burnisher. <span class="cite">— Middleton, pp. 244, 248–49</span>
+        </div>
+        <div class="pg-num left">— 11 —</div>
+      </div>
+    </div>
+
+    <!-- ══ Page 7: Argument / Conclusion ══ -->
+    <div class="page" data-i="7">
+      <div class="face front argument-page">
+        <span class="step-tag">X. Argument</span>
+        <h2>What the Hand Knows</h2>
+        <p class="lead">The history of the book, as told in inventories of presses and sewing frames, is also a history of who was permitted to make it — and on what terms. Before the ledger could record a finished volume, a sewer had to set the signatures, a forwarder had to lace the boards, and an apprentice — usually unpaid — had to perform the tasks too tedious or too physical for the master.</p>
+        <p>Bookbinding survives today not because it is economically rational but because the structural problems it solves — how to make a hinge, how to round a spine, how to mount a board so the book opens fully — are not problems the machine has surpassed in quality, only in cost.</p>
+        <p>What the practice reveals, then, is that <em>the book as an object remembers its labor</em>. Each of the sixty steps leaves a trace; each absence leaves one too. To learn the craft is to learn how to read those traces.</p>
+        <div class="pg-num right">— 12 —</div>
+      </div>
+      <div class="face back">
+        <span class="step-tag">XI. Conclusion</span>
+        <h2>The Common Object</h2>
+        <div class="plate-wrap short">
+          <img src="images/personal-example.jpg" alt="Hand-bound photo album" class="plate-img">
+        </div>
+        <p class="plate-caption"><span class="roman">Fig. V.</span> A hand-bound photo album — the kind of functional object that demonstrates what the book's structure protects and preserves.</p>
+        <p>"Books are common objects," my aunt observed near the end of our conversation, "but most people don't really know about the history of the book."</p>
+        <p>This folio is one small attempt at remembering: a sequence of operations, a pair of voices, and photographs from a studio where the trade is still alive.</p>
+        <div class="conclusion-orn">❦</div>
+        <div class="pg-num left">— 13 —</div>
+      </div>
+    </div>
+
+    <!-- ══ Page 8: Process Archive (gallery pt. 1 / pt. 2) ══ -->
+    <div class="page" data-i="8">
+      <div class="face front">
+        <span class="step-tag">XII. Process Archive</span>
+        <h2>From the Workshop</h2>
+        <div class="arch-col">
+          <figure>
+            <img src="images/archive-paste.jpg" alt="Active studio workspace" class="arch-img lg">
+            <figcaption>Active workspace — a restoration session in progress, with adhesive dishes and an opened text block on the cutting mat.</figcaption>
+          </figure>
+          <figure>
+            <img src="images/archive-rounding.jpg" alt="Fanned spine in lying press" class="arch-img lg">
+            <figcaption>A sewn block fanned at the spine in the lying press, wrapped in linen mull before backing.</figcaption>
+          </figure>
+        </div>
+        <div class="pg-num right">— 14 —</div>
+      </div>
+      <div class="face back">
+        <span class="step-tag">XII. Process Archive (cont.)</span>
+        <h2>From the Workshop</h2>
+        <div class="arch-col">
+          <figure>
+            <img src="images/studio-tools.jpg" alt="Studio workbench tools" class="arch-img md">
+            <figcaption>The workbench: bone folders, brushes, paring knives, and the small accumulated apparatus of the trade.</figcaption>
+          </figure>
+          <figure>
+            <img src="images/rounding-backing.jpg" alt="The lying press" class="arch-img md">
+            <figcaption>The lying press — used for rounding, backing, and all operations requiring the block to be held under tension.</figcaption>
+          </figure>
+          <figure>
+            <img src="images/archive-scharf-fix.jpg" alt="Spine on marble surface" class="arch-img md">
+            <figcaption>Close-up of a spine during conservation work on the marble surface — a structural repair in progress.</figcaption>
+          </figure>
+        </div>
+        <div class="pg-num left">— 15 —</div>
+      </div>
+    </div>
+
+    <!-- ══ Page 9: Works Cited / Colophon ══ -->
+    <div class="page" data-i="9">
+      <div class="face front works-cited">
+        <h2>Works Cited</h2>
+        <div class="rule">· · ·</div>
+        <p>Echo Art Bindery. <em>echoartbindery.com.</em></p>
+        <p>MacDonald, J. Ramsay, editor. <em>Women in the Printing Trades: A Sociological Study.</em> P. S. King &amp; Son, 1904. <em>Project Gutenberg,</em> www.gutenberg.org/files/42275/42275-h/42275-h.htm.</p>
+        <p>Thompson, Deborah Vingerhoet. Personal interview, conducted via FaceTime. 2026.</p>
+        <p>Middleton, Bernard C. <em>A History of English Craft Bookbinding Technique.</em> Hafner Publishing Co., 1963. <em>Internet Archive,</em> archive.org/details/historyofenglish0000midd.</p>
+        <p>Van Kleeck, Mary. <em>Women in the Bookbinding Trade.</em> Survey Associates, 1913. <em>Internet Archive,</em> archive.org/details/womeninbookbindi00vankrich.</p>
+        <div class="pg-num right">— 16 —</div>
+      </div>
+      <div class="face back" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
+        <div style="color:var(--gilt);font-size:2.4rem;margin-bottom:1em">❦</div>
+        <p style="font-family:'IM Fell English SC',serif;letter-spacing:.18em;font-size:.85rem;color:var(--ink-soft)">Echo Art Bindery</p>
+        <p style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.9rem;color:var(--ink-soft);margin-top:.5em">MMXXVI</p>
+        <div class="pg-num left">— 17 —</div>
+      </div>
+    </div>
+
+  </div><!-- /.book -->
+</div><!-- /.book-stage -->
+
+<div class="controls">
+  <button id="prev">◀ Prev</button>
+  <span class="progress" id="progress">Cover</span>
+  <button id="next">Next ▶</button>
+</div>
+<p class="footer-note">Click any page to turn · or use ← → arrow keys</p>
+
+<script>
+const pages = Array.from(document.querySelectorAll('.page'));
+const total  = pages.length;
+// Unflipped pages stack on RIGHT: highest z-index at front (page 0 = cover = top)
+pages.forEach((p,i) => { p.style.zIndex = total - i; });
+let current = 0;
+const prevBtn = document.getElementById('prev');
+const nextBtn = document.getElementById('next');
+const prog    = document.getElementById('progress');
+
+function update(){
+  pages.forEach((p,i) => {
+    if(i < current){
+      p.classList.add('flipped');
+      p.style.zIndex = i + 1;   // flipped pages stack ascending on LEFT
+    } else {
+      p.classList.remove('flipped');
+      p.style.zIndex = total - i; // unflipped pages stack descending on RIGHT
+    }
+  });
+  prevBtn.disabled = (current === 0);
+  nextBtn.disabled = (current === total);
+  if(current === 0)       prog.textContent = 'Cover';
+  else if(current===total) prog.textContent = 'End';
+  else                     prog.textContent = `Spread ${current} / ${total}`;
+}
+
+nextBtn.addEventListener('click', () => { if(current < total){ current++; update(); }});
+prevBtn.addEventListener('click', () => { if(current > 0){ current--; update(); }});
+document.addEventListener('keydown', e => {
+  if(e.key === 'ArrowRight') nextBtn.click();
+  if(e.key === 'ArrowLeft')  prevBtn.click();
+});
+// Click front of current page → advance; click back of most-recently-flipped page → go back
+pages.forEach((p,i) => {
+  p.addEventListener('click', () => {
+    if(i === current && current < total){ current++; update(); }
+    else if(i < current && i === current - 1){ current--; update(); }
+  });
+});
+update();
+</script>
+</body>
+</html>
